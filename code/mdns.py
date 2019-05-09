@@ -106,7 +106,7 @@ class MyListener(object):
         print("inter add_service()")
         self.all_sub_num += 1
         info = zeroconf.get_service_info(type, name)
-        if info.properties[b'type'] == b'diy_plug':
+        if info.properties[b'type'] == b'diy_plug' or info.properties[b'type'] == b'plug':
             self.all_info_dict[name] = info
             if name in self.all_del_sub:
                 self.all_del_sub.remove(name)

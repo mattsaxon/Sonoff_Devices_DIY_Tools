@@ -203,7 +203,7 @@ class MainWindow(QMainWindow):
         ip = new_list[1]
         port = new_list[2]
         data_info = eval(new_list[3])
-        data = eval(str(data_info[b'data1'], encoding="utf8"))
+        data = self.decrypt(data_info[b'data1'], data_info[b'iv'] )
         if "off" in data["switch"]:
             switch = False
         else:
@@ -223,6 +223,33 @@ class MainWindow(QMainWindow):
             "rssi": data["rssi"]}
         print(name, ">>>", self.mDNS_info_sta[name])
         self.new_sub_to_ui()
+
+    def decrypt(self, data_element, iv):
+
+        from Crypto.Hash import MD5
+        from Crypto.Cipher import AES
+        from Crypto.Util.Padding import pad, unpad
+        from base64 import b64decode
+
+        if iv is None:
+            return eval(str(data_element, encoding="utf8"))
+        else:
+
+            ApiKey = [INSERT_TEST_API_KEY_HERE]
+            encoded =  data_element
+
+            h = MD5.new()
+            h.update(ApiKey)
+            key = h.digest()
+
+            cipher = AES.new(key, AES.MODE_CBC, iv=b64decode(iv))
+            ciphertext = b64decode(encoded)        
+            padded = cipher.decrypt(ciphertext)
+            plaintext = unpad(padded, AES.block_size)
+
+            print(plaintext)
+            return eval(plaintext)
+
 
     def new_sub_to_ui(self):
         """
