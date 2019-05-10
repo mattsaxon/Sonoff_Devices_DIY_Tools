@@ -203,12 +203,7 @@ class MainWindow(QMainWindow):
         ip = new_list[1]
         port = new_list[2]
         data_info = eval(new_list[3])
-
-        if data_info[b'encrypt']:
-            data = self.decrypt(data_info[b'data1'], data_info[b'iv'] )
-        else:
-            data = eval(str(data_info[b'data1'], encoding="utf8"))
-
+        data = self.decrypt(data_info[b'data1'], data_info[b'iv'] )
         if "off" in data["switch"]:
             switch = False
         else:
@@ -233,23 +228,27 @@ class MainWindow(QMainWindow):
 
         from Crypto.Hash import MD5
         from Crypto.Cipher import AES
-        from Crypto.Util.Padding import unpad
+        from Crypto.Util.Padding import pad, unpad
         from base64 import b64decode
 
-        ApiKey = b'3c1433d8-a02c-479a-a126-ac9438e6bfe5' # [INSERT_TEST_API_KEY_HERE]
-        encoded =  data_element
+        if iv is None:
+            return eval(str(data_element, encoding="utf8"))
+        else:
 
-        h = MD5.new()
-        h.update(ApiKey)
-        key = h.digest()
+            ApiKey = [INSERT_TEST_API_KEY_HERE]
+            encoded =  data_element
 
-        cipher = AES.new(key, AES.MODE_CBC, iv=b64decode(iv))
-        ciphertext = b64decode(encoded)        
-        padded = cipher.decrypt(ciphertext)
-        plaintext = unpad(padded, AES.block_size)
+            h = MD5.new()
+            h.update(ApiKey)
+            key = h.digest()
 
-        print(plaintext)
-        return eval(plaintext)
+            cipher = AES.new(key, AES.MODE_CBC, iv=b64decode(iv))
+            ciphertext = b64decode(encoded)        
+            padded = cipher.decrypt(ciphertext)
+            plaintext = unpad(padded, AES.block_size)
+
+            print(plaintext)
+            return eval(plaintext)
 
 
     def new_sub_to_ui(self):
