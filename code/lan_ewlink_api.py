@@ -219,13 +219,12 @@ class ThreadForQT(QThread):
         data["sequence"] = str(int(time.time()))
         sub_id = info["sub_id"]
         data["deviceid"] = sub_id
-        data["encrypt"] = False
-        data["iv"] = "1234567890123456"
         data["selfApikey"] = "123"
         if out_sta:
             data["data"] = '{\"switch\": \"on\"}'
         else:
             data["data"] = '{\"switch\": \"off\"}'
+        self.format_encryption(data)
         # 3. Call Http_API(postRequest) to send.
         try:
             print("%s发送数据：%s" % (url, str(data)))
@@ -263,8 +262,6 @@ class ThreadForQT(QThread):
         data["sequence"] = str(int(time.time()))
         sub_id = info["sub_id"]
         data["deviceid"] = sub_id
-        data["encrypt"] = False
-        data["iv"] = "1234567890123456"
         data["selfApikey"] = "123"
         if state == 0:
             data["data"] = '{\"startup\": \"off\"}'
@@ -272,6 +269,7 @@ class ThreadForQT(QThread):
             data["data"] = '{\"startup\": \"on\"}'
         elif state == 2:
             data["data"] = '{\"startup\": \"stay\"}'
+        self.format_encryption(data)
         # 3. Call Http_API(postRequest) to send.
         try:
             print("%s SEND：%s" % (url, str(data)))
@@ -307,10 +305,9 @@ class ThreadForQT(QThread):
         data["sequence"] = str(int(time.time()))
         sub_id = info["sub_id"]
         data["deviceid"] = sub_id
-        data["encrypt"] = False
-        data["iv"] = "1234567890123456"
         data["selfApikey"] = "123"
         data["data"] = r'{\n\}'
+        self.format_encryption(data)
         # 3. Call Http_API(postRequest) to send.
         try:
             print("%s SEND：%s" % (url, str(data)))
@@ -350,11 +347,10 @@ class ThreadForQT(QThread):
         data["sequence"] = str(int(time.time()))
         sub_id = info["sub_id"]
         data["deviceid"] = sub_id
-        data["encrypt"] = False
-        data["iv"] = "1234567890123456"
         data["selfApikey"] = "123"
         data["data"] = '{\"pulse\": \"' + pulse + \
             '\",\"pulseWidth\": ' + str(pulseWidth) + '}'
+        self.format_encryption(data)
         # 3. Call Http_API(postRequest) to send.
         try:
             print("%s SEND：%s" % (url, str(data)))
@@ -394,11 +390,10 @@ class ThreadForQT(QThread):
         data["sequence"] = str(int(time.time()))
         sub_id = info["sub_id"]
         data["deviceid"] = sub_id
-        data["encrypt"] = False
-        data["iv"] = "1234567890123456"
         data["selfApikey"] = "123"
         data["data"] = '{\"ssid\": \"' + ssid + \
             '\",\"password\": \"' + password + '\"}'
+        self.format_encryption(data)
         # 3. Call Http_API(postRequest) to send.
         try:
             print("%s SEND：%s" % (url, str(data)))
@@ -435,10 +430,9 @@ class ThreadForQT(QThread):
         data["sequence"] = str(int(time.time()))
         sub_id = info["sub_id"]
         data["deviceid"] = sub_id
-        data["encrypt"] = False
-        data["iv"] = "1234567890123456"
         data["selfApikey"] = "123"
         data["data"] = '{\n\n}'
+        self.format_encryption(data)
         # 3. Call Http_API(postRequest) to send.
         try:
             print("%s SEND：%s" % (url, str(data)))
@@ -478,11 +472,10 @@ class ThreadForQT(QThread):
         data["sequence"] = str(int(time.time()))
         sub_id = info["sub_id"]
         data["deviceid"] = sub_id
-        data["encrypt"] = False
-        data["iv"] = "1234567890123456"
         data["selfApikey"] = "123"
         data["data"] = '{\"downloadUrl\":\"http://' + info["sever_ip"] + ':' + str(
             info["sever_port"]) + '/itead.bin",\"sha256sum\":\"' + info["sha256sum"] + '"}'
+        self.format_encryption(data)
         # 3. Call Http_API(postRequest) to send.
         try:
             print("%s SEND：%s" % (url, str(data)))
@@ -496,3 +489,38 @@ class ThreadForQT(QThread):
                 return 1
         except BaseException:
             return 1
+
+    def format_encryption(self, data):
+
+        encrypt = True
+        data["encrypt"] = encrypt
+        if encrypt:
+            from base64 import b64encode
+            iv = self.generate_iv()
+            data["iv"] = b64encode(iv).decode("utf-8") 
+            data["data"] = self.encrypt(data["data"], iv)
+
+    def encrypt(self, data_element, iv):
+
+        from Crypto.Hash import MD5
+        from Crypto.Cipher import AES
+        from Crypto.Util.Padding import pad
+        from base64 import b64encode
+
+        ApiKey = b[INSERT_TEST_API_KEY_HERE]
+        plaintext = bytes(data_element, 'utf-8')
+
+        h = MD5.new()
+        h.update(ApiKey)
+        key = h.digest()
+
+        cipher = AES.new(key, AES.MODE_CBC, iv=iv)     
+        padded = pad(plaintext, AES.block_size)
+        ciphertext = cipher.encrypt(padded)
+        encode = b64encode(ciphertext) 
+
+        print(encode)
+        return encode.decode("utf-8")
+
+    def generate_iv(self):
+        return b'1234567890123456'
